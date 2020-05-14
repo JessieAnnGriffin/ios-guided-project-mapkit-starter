@@ -82,6 +82,17 @@ extension EarthquakesViewController: MKMapViewDelegate {
             else { preconditionFailure("Missing the registered map annotation view.") }
         
         annotationView.glyphImage = #imageLiteral(resourceName: "QuakeIcon")
+        
+        if quake.magnitude >= 7 {
+            annotationView.markerTintColor = .systemPurple
+        } else if quake.magnitude >= 5 {
+            annotationView.markerTintColor = .systemRed
+        } else if quake.magnitude >= 3 {
+            annotationView.markerTintColor = .systemOrange
+        } else {
+            annotationView.markerTintColor = .systemYellow
+        }
+        
         annotationView.canShowCallout = true
         let detailView = QuakeDetailView()
         detailView.quake = quake
