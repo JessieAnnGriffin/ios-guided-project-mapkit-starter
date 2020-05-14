@@ -7,6 +7,20 @@
 //
 
 import Foundation
+import CoreLocation
+import MapKit
+
+
+extension CoordinateRegion {
+    fileprivate var queryItems: [URLQueryItem] {
+        return [
+            URLQueryItem(name: "minlongitude", value: String(origin.longitude)),
+            URLQueryItem(name: "minlatitude", value: String(origin.latitude)),
+            URLQueryItem(name: "maxlongitude", value: String(origin.longitude + size.width)),
+            URLQueryItem(name: "maxlatitude", value: String(origin.latitude + size.height))
+        ]
+    }
+}
 
 enum QuakeError: Int, Error {
     case invalidURL
@@ -19,7 +33,8 @@ class QuakeFetcher {
     let baseURL = URL(string: "https://earthquake.usgs.gov/fdsnws/event/1/query")!
     let dateFormatter = ISO8601DateFormatter()
     
-    func fetchQuakes(completion: @escaping ([Quake]?, Error?) -> Void) {
+    func fetchQuakes(in region: MKMapRect? = nil,
+                     completion: @escaping ([Quake]?, Error?) -> Void) {
         
         let endDate = Date()
         var dateComponents = DateComponents()
@@ -33,10 +48,11 @@ class QuakeFetcher {
         }
         
         let interval = DateInterval(start: startDate, end: endDate)
-        fetchQuakes(from: interval, completion: completion)
+        fetchQuakes(from: interval, in: region, completion: completion)
     }
     
     func fetchQuakes(from dateInterval: DateInterval,
+                     in region: MKMapRect? = nil,
                      completion: @escaping ([Quake]?, Error?) -> Void) {
         
         
@@ -46,11 +62,16 @@ class QuakeFetcher {
         let startTime = dateFormatter.string(from: dateInterval.start)
         let endTime = dateFormatter.string(from: dateInterval.end)
         
-        let queryItems = [
+        var queryItems = [
             URLQueryItem(name: "starttime", value: startTime),
             URLQueryItem(name: "endtime", value: endTime),
             URLQueryItem(name: "format", value: "geojson"),
         ]
+        
+        if let region = region {
+            let coordinates = CoordinateRegion(mapRect: region)
+            queryItems.append(contentsOf: coordinates.queryItems)
+        }
         
         urlComponents?.queryItems = queryItems
         
@@ -79,9 +100,15 @@ class QuakeFetcher {
             }
                         
             do {
+                print(data)
                 // TODO: Implement decoding and completion call
-
-
+                let decoder = JSONDecoder()
+                decoder.dateDecodingStrategy = .millisecondsSince1970
+                let quakeResults = try decoder.decode(QuakeResults.self, from: data)
+                
+                DispatchQueue.main.async {
+                    completion(quakeResults.features, nil)
+                }
                 
             } catch {
                 print("Decoding error: \(error)")
