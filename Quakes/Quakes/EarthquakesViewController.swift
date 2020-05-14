@@ -22,7 +22,16 @@ class EarthquakesViewController: UIViewController {
     
     var quakes: [Quake] = [] {
         didSet {
-            mapView.addAnnotations(quakes)
+//            mapView.addAnnotations(quakes)
+            // optimize to remove old ones and add new ones dynamically
+            let oldQuakes = Set(oldValue)
+            let newQuakes = Set(quakes)
+            
+            let addedQuakes = Array(newQuakes.subtracting(oldQuakes))
+            let removedQuakes = Array(oldQuakes.subtracting(newQuakes))
+            
+            mapView.removeAnnotations(removedQuakes)
+            mapView.addAnnotations(addedQuakes)
         }
     }
 	
