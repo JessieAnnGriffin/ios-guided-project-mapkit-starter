@@ -66,7 +66,6 @@ class EarthquakesViewController: UIViewController {
             }
             self.quakes = quakes ?? []
         }
-        
     }
 }
 
@@ -80,7 +79,13 @@ extension EarthquakesViewController: MKMapViewDelegate {
         
         guard let annotationView = mapView.dequeueReusableAnnotationView(withIdentifier: .annotationReuseIdentifier,
                                                                          for: quake) as? MKMarkerAnnotationView
-            else { preconditionFailure("Missing the registered map annotation view.")}
+            else { preconditionFailure("Missing the registered map annotation view.") }
+        
+        annotationView.glyphImage = #imageLiteral(resourceName: "QuakeIcon")
+        annotationView.canShowCallout = true
+        let detailView = QuakeDetailView()
+        detailView.quake = quake
+        annotationView.detailCalloutAccessoryView = detailView
         
         return annotationView
     }
